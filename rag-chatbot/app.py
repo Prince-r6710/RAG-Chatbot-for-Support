@@ -15,22 +15,15 @@ openai_key = st.text_input("🔑 Enter your OpenAI API Key", type="password")
 # --- Question Input ---
 question = st.text_input("💬 Your question:")
 
-# --- Define vectorstore path relative to this script ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 VECTORSTORE_PATH = os.path.join(BASE_DIR, "vectorstore")
 
 if openai_key and question:
     try:
         embeddings = OpenAIEmbeddings(openai_api_key=openai_key)
-
-        # Debug info: show current dir and vectorstore contents
-        st.write("Current working directory:", os.getcwd())
-        st.write("Vectorstore directory contents:", os.listdir(VECTORSTORE_PATH))
-
         vectorstore = FAISS.load_local(
             VECTORSTORE_PATH, embeddings, allow_dangerous_deserialization=True
         )
-
         retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
         llm = ChatOpenAI(openai_api_key=openai_key, temperature=0)
 
