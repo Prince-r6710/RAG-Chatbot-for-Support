@@ -2,7 +2,7 @@ import streamlit as st
 from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain.chains import RetrievalQA
-import os
+from langchain.schema import Document
 
 # --- Page Setup ---
 st.set_page_config(page_title="AngelOne Support Chatbot", page_icon="🤖")
@@ -15,34 +15,62 @@ openai_key = st.text_input("🔑 Enter your OpenAI API Key", type="password")
 # --- Question Input ---
 question = st.text_input("💬 Your question:")
 
-# --- Process ---
+# Helper: customize answer with metadata info if available
+def format_answer(answer_docs, raw_answer):
+    if not answer_docs:
+        return "I Don't know"
+
+    # Collect unique plan/source metadata from docs used in answer
+    metadata_info = []
+    for doc in answer_docs:
+        meta = doc.metadata
+        if "plan_name" in meta:
+            metadata_info.append(meta["plan_name"])
+        elif "source" in meta:
+            metadata_info.append(meta["source"])
+
+    metadata_info = list(set(metadata_info))  # unique values
+
+    # Format metadata info in answer
+    if metadata_info:
+        meta_text = ", ".join(metadata_info)
+        return f"**Based on:** {meta_text}\n\n{raw_answer}"
+    else:
+        return raw_answer
+
+
 if openai_key and question:
     try:
-        # 1. Load embeddings with user's key
         embeddings = OpenAIEmbeddings(openai_api_key=openai_key)
-
-        # 2. Dynamically get full path to vectorstore directory
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        vectorstore_path = os.path.join(current_dir, "vectorstore")
-
-        # 3. Load the FAISS vectorstore from disk
         vectorstore = FAISS.load_local(
-            vectorstore_path, embeddings, allow_dangerous_deserialization=True
+            "vectorstore", embeddings, allow_dangerous_deserialization=True
         )
-
-        # 4. Create retriever and QA chain
-        retriever = vectorstore.as_retriever()
+        retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
         llm = ChatOpenAI(openai_api_key=openai_key, temperature=0)
-        qa_chain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever)
-
-        # 5. Run the chain and show answer
+        
+        qa_chain = RetrievalQA.from_chain_type(
+            llm=llm, retriever=retriever, return_source_documents=True
+        )
+        
         with st.spinner("Searching..."):
-            result = qa_chain.run(question)
-        st.success("✅ Answer:")
-        st.write(result)
+            response = qa_chain({"query": question})  # use __call__ here
+            
+        answer = response["result"]
+        docs = response["source_documents"]
 
+        if "I don't know" in answer.lower() or len(answer.strip()) < 10:
+            st.warning("I Don't know")
+        else:
+            # Example: show answer and source document metadata
+            st.success("✅ Answer:")
+            st.write(answer)
+            st.markdown("### Sources:")
+            for doc in docs:
+                st.markdown(f"- {doc.metadata.get('source', 'unknown source')}")
+            
     except Exception as e:
         st.error(f"⚠️ Error: {str(e)}")
+
 
 elif not openai_key:
     st.info("Please enter your OpenAI API key to begin.")
