@@ -2,6 +2,7 @@ import streamlit as st
 from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain.chains import RetrievalQA
+import os
 
 # --- Page Setup ---
 st.set_page_config(page_title="AngelOne Support Chatbot", page_icon="🤖")
@@ -20,17 +21,21 @@ if openai_key and question:
         # 1. Load embeddings with user's key
         embeddings = OpenAIEmbeddings(openai_api_key=openai_key)
 
-        # 2. Load the FAISS vectorstore from disk
+        # 2. Dynamically get full path to vectorstore directory
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        vectorstore_path = os.path.join(current_dir, "vectorstore")
+
+        # 3. Load the FAISS vectorstore from disk
         vectorstore = FAISS.load_local(
-            "vectorstore", embeddings, allow_dangerous_deserialization=True
+            vectorstore_path, embeddings, allow_dangerous_deserialization=True
         )
 
-        # 3. Create retriever and QA chain
+        # 4. Create retriever and QA chain
         retriever = vectorstore.as_retriever()
         llm = ChatOpenAI(openai_api_key=openai_key, temperature=0)
         qa_chain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever)
 
-        # 4. Run the chain and show answer
+        # 5. Run the chain and show answer
         with st.spinner("Searching..."):
             result = qa_chain.run(question)
         st.success("✅ Answer:")
@@ -38,6 +43,7 @@ if openai_key and question:
 
     except Exception as e:
         st.error(f"⚠️ Error: {str(e)}")
+
 elif not openai_key:
     st.info("Please enter your OpenAI API key to begin.")
 elif not question:
