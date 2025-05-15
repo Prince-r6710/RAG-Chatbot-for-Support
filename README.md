@@ -6,7 +6,7 @@ This is a Retrieval-Augmented Generation (RAG) chatbot trained on AngelOne's cus
 
 ## 🚀 Live Demo
 
-Try the hosted chatbot here: [AngelOne Support Chatbot](https://your-username-yourapp.streamlit.app)
+Try the hosted chatbot here: [AngelOne Support Chatbot](https://rag-chatbot-for-support-angle.streamlit.app/)
 
 ---
 
