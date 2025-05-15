@@ -23,9 +23,24 @@ Try the hosted chatbot here: [AngelOne Support Chatbot](https://rag-chatbot-for-
 
 ### 1. Clone the Repo
 
-```bash
-git clone https://github.com/yourusername/rag-chatbot.git
-cd rag-chatbot
+<pre> ```bash git clone https://github.com/Prince-r6710/RAG-Chatbot-for-Support.git cd rag-chatbot-for-support/rag-chatbot ``` </pre>
+
+
+### 2. Clone the Repo
+<pre> ```bash  python -m venv venv source venv/bin/activate `` </pre>
+
+### 3. Install Dependencies
+<pre> ```bash  pip install -r requirements.txt `` </pre>
+
+### 4.Ingest Documents & Create Vector Store (Run Once)
+<pre> ```bash  python ingest.py `` </pre>
+
+### 5. Run the Chatbot
+<pre> ```bash streamlit run app.py `` </pre>
 
 
 
+📝 Notes
+You need to provide your own OpenAI API key in the app at runtime.
+
+The vectorstore files are already included for quick startup
