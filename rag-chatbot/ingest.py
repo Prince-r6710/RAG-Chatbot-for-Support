@@ -33,7 +33,13 @@ def load_documents():
             for doc in loaded_docs:
                 doc.metadata["plan_name"] = plan_name
             docs.extend(loaded_docs)
-
+    html_files = glob.glob("data/html/*.html")
+    for html in html_files:
+        loader = UnstructuredHTMLLoader(html)
+        doc = loader.load()
+        for file in doc:
+            file.metadta["source"] = "angle one"
+        docs.extend(doc)
     # Load america_choice_questions.docx with metadata
     docx_path = os.path.join("data", "america_choice_questions.docx")
     if os.path.exists(docx_path):
