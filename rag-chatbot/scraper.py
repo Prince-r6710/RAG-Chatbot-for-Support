@@ -26,7 +26,7 @@ def get_support_links():
     return list(links)
 
 def scrape_and_save_pages():
-    os.makedirs("rag-chatbot/data/html", exist_ok=True)
+    os.makedirs("data/html", exist_ok=True)
     links = get_support_links()
     print(f"Found {len(links)} support links")
 
@@ -39,7 +39,7 @@ def scrape_and_save_pages():
         try:
             response = requests.get(url, headers=headers)
             if response.status_code == 200:
-                with open(f"rag-chatbot/data/html/page_{i}.html", "w", encoding="utf-8") as f:
+                with open(f"data/html/page_{i}.html", "w", encoding="utf-8") as f:
                     f.write(response.text)
             else:
                 print(f"Failed to get page {url} status {response.status_code}")

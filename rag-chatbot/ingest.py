@@ -3,8 +3,14 @@ import glob
 from dotenv import load_dotenv
 load_dotenv()
 
+import os
+import glob
+from dotenv import load_dotenv
+load_dotenv()
+
 from langchain_community.document_loaders import (
     PyPDFLoader,
+    PDFPlumberLoader,              # Added for fallback
     UnstructuredWordDocumentLoader,
     UnstructuredHTMLLoader
 )
@@ -16,7 +22,7 @@ from langchain_openai import OpenAIEmbeddings
 def load_documents():
     docs = []
 
-    # Load PDFs with metadata about plan
+    # Define your plans and PDFs
     plans = {
         "2500_plan_gold.pdf": "2500 Plan Gold",
         "5000_plan_bronze.pdf": "5000 Plan Bronze",
@@ -25,31 +31,42 @@ def load_documents():
     }
 
     for filename, plan_name in plans.items():
-        pdf_path = os.path.join("data", filename)
+        pdf_path = os.path.join("/home/princekumargupta/RAG-Chatbot-for-Support/rag-chatbot/data", filename)
         if os.path.exists(pdf_path):
-            loader = PyPDFLoader(pdf_path)
-            loaded_docs = loader.load()
-            # Add metadata for plan name to each page/document
+            try:
+                loader = PyPDFLoader(pdf_path)
+                loaded_docs = loader.load()
+            except Exception as e:
+                print(f"❌ PyPDFLoader failed for {filename}: {e}")
+                print("👉 Trying PDFPlumberLoader instead...")
+                try:
+                    loader = PDFPlumberLoader(pdf_path)
+                    loaded_docs = loader.load()
+                except Exception as e2:
+                    print(f"❌ PDFPlumberLoader also failed for {filename}: {e2}")
+                    continue
+
             for doc in loaded_docs:
                 doc.metadata["plan_name"] = plan_name
             docs.extend(loaded_docs)
-    html_files = glob.glob("data/html/*.html")
+
+    # Load HTML files with fixed metadata key
+    html_files = glob.glob("/home/princekumargupta/RAG-Chatbot-for-Support/rag-chatbot/data/html/*.html")
     for html in html_files:
         loader = UnstructuredHTMLLoader(html)
         doc = loader.load()
         for file in doc:
-            file.metadta["source"] = "angle one"
+            file.metadata["source"] = "angel one"
         docs.extend(doc)
-    # Load america_choice_questions.docx with metadata
-    docx_path = os.path.join("data", "america_choice_questions.docx")
+
+    # Load DOCX file
+    docx_path = os.path.join("/home/princekumargupta/RAG-Chatbot-for-Support/rag-chatbot/data", "america_choice_questions.docx")
     if os.path.exists(docx_path):
         loader = UnstructuredWordDocumentLoader(docx_path)
         loaded_docs = loader.load()
         for doc in loaded_docs:
             doc.metadata["source"] = "America Choice Medical Questions"
         docs.extend(loaded_docs)
-
-    # You can add other document loaders similarly if needed
 
     return docs
 
